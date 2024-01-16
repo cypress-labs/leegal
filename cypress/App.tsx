@@ -1,54 +1,27 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
+import React, {useState} from 'react';
+import tw from 'twrnc';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
   Text,
   useColorScheme,
   View,
+  TouchableOpacity,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+
+import Header from './components/Header';
 
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
 function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
+    <View style={tw`mt-3 px-2`}>
+      <Text style={tw`text-2xl font-bold dark:text-white`}>{title}</Text>
+      <Text style={tw`mt-1 text-base font-medium dark:text-white`}>
         {children}
       </Text>
     </View>
@@ -56,6 +29,9 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
+  const [account, setAccount] = useState<string>('Not Connected');
+  const [balance, setBalance] = useState<string>('0');
+
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -64,55 +40,27 @@ function App(): React.JSX.Element {
 
   return (
     <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+      <Header />
+      <View style={tw`bg-white`}>
+        <Section title="Login via Web3Auth">
+          <TouchableOpacity
+            style={tw`bg-blue-500 text-white font-bold py-2 px-4 rounded`}
+            onPress={() => {
+              console.log('Login Pressed');
+            }}>
+            <Text>Connect to Wallet</Text>
+          </TouchableOpacity>
+        </Section>
+        <Section title="Account Details">
+          <Text style={tw`text-gray-500`}>Account: {account}</Text>
+        </Section>
+        <Section title="$FRT Balance">
+          <Text style={tw`text-gray-500`}>Balance: {balance}</Text>
+        </Section>
+        <Section title="Garden Details">Debug details of the garden</Section>
+      </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
