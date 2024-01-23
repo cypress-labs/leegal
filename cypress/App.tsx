@@ -3,6 +3,16 @@ import tw from 'twrnc';
 import type {PropsWithChildren} from 'react';
 import {SafeAreaView, Text, View, TouchableOpacity} from 'react-native';
 
+import EncryptedStorage from 'react-native-encrypted-storage';
+import * as WebBrowser from '@toruslabs/react-native-web-browser';
+import Web3Auth, {LOGIN_PROVIDER} from '@web3auth/react-native-sdk';
+
+import {thorify} from 'thorify';
+const Web3 = require('web3');
+
+//import ethers from '@vechain/ethers';
+//import Connex from '@vechain/connex';
+
 import Header from './components/Header';
 
 const WEB3AUTH_CLIENTID =
@@ -27,15 +37,48 @@ const scheme = 'app.cypresslabs.ios';
 const redirectUrl = `${scheme}://auth`;
 
 const App = (): React.JSX.Element => {
+  const [privateKey, setPrivateKey] = useState<string>('Not Connected');
   const [account, setAccount] = useState<string>('Not Connected');
   const [balance, setBalance] = useState<string>('0');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
-  useEffect(() => {}, []);
+  //const web3auth = new Web3Auth(EncryptedStorage, SdkInitOptions);
+  //
 
-  const handleLogin = async () => {};
+  const web3auth = new Web3Auth(WebBrowser, EncryptedStorage, {
+    clientId: WEB3AUTH_CLIENTID, // Get your Client ID from the Web3Auth Dashboard
+    network: 'sapphire_devnet',
+  });
 
-  const handleLogout = async () => {};
+  const web3AuthLoginOptions = {
+    loginProvider: LOGIN_PROVIDER.GOOGLE,
+    redirectUrl: redirectUrl,
+  };
+
+  useEffect(() => {
+    web3auth.init();
+  }, [web3auth]);
+
+  const handleLogin = async () => {
+    web3auth
+      .login(web3AuthLoginOptions)
+      .then(() => {
+        //console.log(web3auth.userInfo());
+        setIsLoggedIn(true);
+        setAccount(web3auth.userInfo().email || 'Not Connected');
+        setPrivateKey(web3auth.privKey || '');
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
+  const handleLogout = async () => {
+    await web3auth.logout();
+    setIsLoggedIn(false);
+    setAccount('Not Connected');
+    setPrivateKey('Not Connected');
+  };
 
   return (
     <SafeAreaView style={tw`bg-white`}>
@@ -61,7 +104,11 @@ const App = (): React.JSX.Element => {
           )}
         </Section>
         <Section title="Account Details">
-          <Text style={tw`text-gray-500`}>Account: {account}</Text>
+          <Text style={tw`text-gray-500`}>
+            Account: {account}
+            {'\n'}
+            PKey: {privateKey}
+          </Text>
         </Section>
         <Section title="$FRT Balance">
           <Text style={tw`text-gray-500`}>Balance: {balance}</Text>

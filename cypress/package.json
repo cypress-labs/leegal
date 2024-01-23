@@ -10,8 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@vechain/connex": "^2.1.0",
-    "@vechain/ethers": "^4.0.27-5",
+    "@toruslabs/react-native-web-browser": "^1.1.0",
+    "@web3auth/react-native-sdk": "^5.1.0",
     "buffer": "^6.0.3",
     "empty-module": "^0.0.2",
     "process": "^0.11.10",
@@ -23,7 +23,9 @@
     "react-native-quick-crypto": "^0.6.1",
     "readable-stream": "^4.5.2",
     "thor-devkit": "^2.0.9",
-    "twrnc": "^3.6.7"
+    "thorify": "^1.6.2",
+    "twrnc": "^3.6.7",
+    "web3": "1.10.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -44,6 +46,6 @@
     "typescript": "5.0.4"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
