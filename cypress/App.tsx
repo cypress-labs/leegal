@@ -5,12 +5,8 @@ import {SafeAreaView, Text, View, TouchableOpacity} from 'react-native';
 
 import Header from './components/Header';
 
-import Web3Auth, {
-  LOGIN_PROVIDER,
-  OPENLOGIN_NETWORK,
-} from '@web3auth/react-native-sdk';
-import * as WebBrowser from '@toruslabs/react-native-web-browser';
-import EncryptedStorage from 'react-native-encrypted-storage';
+const WEB3AUTH_CLIENTID =
+  'BCTSBrn61jL_KXD6ZJURT65r8XBr9FNGvMjOrFqkHBNnq-z00Qa5Q1jO1B-1qUzXEo_AlezGqL2zmcMJbslMSEo';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -27,12 +23,6 @@ function Section({children, title}: SectionProps): React.JSX.Element {
   );
 }
 
-const SdkInitParams = {
-  clientId:
-    'BCTSBrn61jL_KXD6ZJURT65r8XBr9FNGvMjOrFqkHBNnq-z00Qa5Q1jO1B-1qUzXEo_AlezGqL2zmcMJbslMSEo',
-  network: OPENLOGIN_NETWORK.SAPPHIRE_DEVNET, // or other networks
-};
-
 const scheme = 'app.cypresslabs.ios';
 const redirectUrl = `${scheme}://auth`;
 
@@ -41,33 +31,11 @@ const App = (): React.JSX.Element => {
   const [balance, setBalance] = useState<string>('0');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
-  const web3auth = new Web3Auth(WebBrowser, EncryptedStorage, SdkInitParams);
+  useEffect(() => {}, []);
 
-  useEffect(() => {
-    web3auth.init();
-  }, [web3auth]);
+  const handleLogin = async () => {};
 
-  const handleLogin = async () => {
-    web3auth
-      .login({
-        loginProvider: LOGIN_PROVIDER.GOOGLE,
-        redirectUrl,
-      })
-      .then(res => {
-        console.log(web3auth.userInfo());
-        setIsLoggedIn(true);
-        setAccount(web3auth.userInfo().email || 'Not Connected');
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  };
-
-  const handleLogout = async () => {
-    web3auth.logout();
-    setIsLoggedIn(false);
-    setAccount('Not Connected');
-  };
+  const handleLogout = async () => {};
 
   return (
     <SafeAreaView style={tw`bg-white`}>
