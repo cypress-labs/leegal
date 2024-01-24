@@ -10,11 +10,7 @@ import Web3Auth, {LOGIN_PROVIDER} from '@web3auth/react-native-sdk';
 import {ethers} from 'ethers';
 import * as thor from '@vechain/web3-providers-connex';
 import {Framework} from '@vechain/connex-framework';
-import {Driver, SimpleWallet} from '@vechain/connex-driver';
-import {SimpleNet} from '@vechain/connex-driver/esm/simple-net';
-
-import {Transaction, secp256k1} from 'thor-devkit';
-import bent from 'bent';
+import {Driver, SimpleWallet, SimpleNet} from '@vechain/connex-driver';
 
 import Header from './components/Header';
 import CONTRACT_ABI from './src/cypress_abi.json';
@@ -29,15 +25,6 @@ const WEB3AUTH_CLIENTID =
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
-
-//const get = bent('GET', 'https://node-testnet.vechain.energy', 'json');
-//const post = bent('POST', 'https://node-testnet.vechain.energy', 'json');
-//const getSponsorship = bent(
-//'POST',
-//'https://sponsor-testnet.vechain.energy',
-//'json',
-//);
-//
 
 function Section({children, title}: SectionProps): React.JSX.Element {
   return (
@@ -68,11 +55,6 @@ const App = (): React.JSX.Element => {
     loginProvider: LOGIN_PROVIDER.GOOGLE,
     redirectUrl: redirectUrl,
   };
-
-  //const ethersProvider = new ethers.BrowserProvider(
-  //'https://testnet.vecha.in', new ethers.Network("Vechain", 0x186aa));
-
-  //const provider = thor.ethers.modifyProvider(new ethers.BrowserProvider());
 
   useEffect(() => {
     web3auth.init();
