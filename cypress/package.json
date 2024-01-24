@@ -11,9 +11,14 @@
   },
   "dependencies": {
     "@toruslabs/react-native-web-browser": "^1.1.0",
+    "@vechain/connex-driver": "^2.1.0",
+    "@vechain/connex-framework": "^2.1.0",
+    "@vechain/web3-providers-connex": "^1.1.2",
     "@web3auth/react-native-sdk": "^5.1.0",
+    "bent": "^7.3.12",
     "buffer": "^6.0.3",
     "empty-module": "^0.0.2",
+    "ethers": "^6.10.0",
     "process": "^0.11.10",
     "react": "18.2.0",
     "react-native": "0.73.2",
@@ -23,9 +28,8 @@
     "react-native-quick-crypto": "^0.6.1",
     "readable-stream": "^4.5.2",
     "thor-devkit": "^2.0.9",
-    "thorify": "^1.6.2",
     "twrnc": "^3.6.7",
-    "web3": "1.10.2"
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -46,6 +50,6 @@
     "typescript": "5.0.4"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   }
 }
