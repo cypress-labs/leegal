@@ -10,7 +10,8 @@ import Web3Auth, {LOGIN_PROVIDER} from '@web3auth/react-native-sdk';
 import {ethers} from 'ethers';
 import * as thor from '@vechain/web3-providers-connex';
 import {Framework} from '@vechain/connex-framework';
-import {Driver, SimpleWallet, SimpleNet} from '@vechain/connex-driver';
+import {Driver, SimpleWallet} from '@vechain/connex-driver';
+import {SimpleNet} from './custom_modules/@vechain/esm/simple-net';
 
 import Header from './components/Header';
 import CONTRACT_ABI from './src/cypress_abi.json';
@@ -41,9 +42,9 @@ const redirectUrl = `${scheme}://auth`;
 const App = (): React.JSX.Element => {
   const [wallet, setWallet] = useState<SimpleWallet>(new SimpleWallet());
   const [wallets, setWallets] = useState<Key[]>([]);
-  const [provider, setProvider] = useState<ethers.providers.Provider>();
+  const [provider, setProvider] = useState<ethers.Provider>();
   const [account, setAccount] = useState<string>('Not Connected');
-  const [balance, setBalance] = useState<string>('0');
+  const [balance, setBalance] = useState<string>('0 VET');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   const web3auth = new Web3Auth(WebBrowser, EncryptedStorage, {
@@ -60,7 +61,7 @@ const App = (): React.JSX.Element => {
     web3auth.init();
   }, [web3auth]);
 
-  const checkState = async () => {
+  const updateBalance = async () => {
     //console.log(web3auth.privKey);
     //wallet.import('0x' + web3auth.privKey);
     //console.log(wallet.list);
@@ -102,7 +103,7 @@ const App = (): React.JSX.Element => {
     setIsLoggedIn(false);
     setAccount('Not Connected');
     setWallets([]);
-    setBalance('0');
+    setBalance('0 VET');
   };
 
   return (
@@ -129,31 +130,32 @@ const App = (): React.JSX.Element => {
           )}
         </Section>
         <Section title="Account Details">
-          <Text style={tw`text-gray-500`}>Account: {account} </Text>
+          <Text style={tw`text-gray-500`}>Web3Auth Account: {account} </Text>
           {wallets.map((item, index) => (
             <Text key={index} style={tw`text-gray-500`}>
               Wallet {index + 1}: {item.address}{' '}
             </Text>
           ))}
         </Section>
-        <Section title="$FRT Balance">
-          <Text style={tw`text-gray-500`}>Balance: {balance}</Text>
+        <Section title="$FRT & $VET Balance">
+          <Text style={tw`text-gray-500`}>$VET Balance: {balance}</Text>
+          <Text style={tw`text-gray-500`}>$FRT Balance: Not Implemented</Text>
         </Section>
         <Section title="Garden Details">
           <Text>Debug details of the garden</Text>
           <TouchableOpacity
             style={tw`bg-green-500 font-bold py-2 px-4 mt-2 rounded`}
             onPress={() => {
-              initEthers();
+              console.log(provider?.getNetwork());
             }}>
             <Text style={tw`text-white`}>Manual Init Ethers</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={tw`bg-violet-500 font-bold py-2 px-4 mt-2 rounded`}
             onPress={() => {
-              checkState();
+              updateBalance();
             }}>
-            <Text style={tw`text-white`}>Update Wallets</Text>
+            <Text style={tw`text-white`}>Update Balance</Text>
           </TouchableOpacity>
         </Section>
       </View>
