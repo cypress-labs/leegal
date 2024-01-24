@@ -14,30 +14,44 @@ import {Driver, SimpleWallet} from '@vechain/connex-driver';
 import {SimpleNet} from './custom_modules/@vechain/esm/simple-net';
 
 import Header from './components/Header';
-import CONTRACT_ABI from './src/cypress_abi.json';
 
 // Smart contract details
 const CONTRACT_ADDRESS = '0x36C62C181E8815cCABACC2bD9A21d41a1580CAd6';
 const NODE_URL = 'https://testnet.vecha.in/';
+import CONTRACT_ABI from './src/cypress_abi.json';
 
+// Web3Auth details
 const WEB3AUTH_CLIENTID =
   'BCTSBrn61jL_KXD6ZJURT65r8XBr9FNGvMjOrFqkHBNnq-z00Qa5Q1jO1B-1qUzXEo_AlezGqL2zmcMJbslMSEo';
+const scheme = 'app.cypresslabs.ios';
+const redirectUrl = `${scheme}://auth`;
+const web3AuthLoginOptions = {
+  loginProvider: LOGIN_PROVIDER.GOOGLE,
+  redirectUrl: redirectUrl,
+};
 
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
+const Section = ({children, title}: SectionProps): React.JSX.Element => {
   return (
     <View style={tw`mt-3 px-2 flex flex-col`}>
       <Text style={tw`text-2xl font-bold dark:text-white`}>{title}</Text>
       {children}
     </View>
   );
-}
+};
 
-const scheme = 'app.cypresslabs.ios';
-const redirectUrl = `${scheme}://auth`;
+const Button = ({children, onPress, color}: any): React.JSX.Element => {
+  return (
+    <TouchableOpacity
+      style={tw`bg-${color}-400 text-white font-bold py-2 px-4 mt-2 rounded`}
+      onPress={onPress}>
+      <Text>{children}</Text>
+    </TouchableOpacity>
+  );
+};
 
 const App = (): React.JSX.Element => {
   const [wallet, setWallet] = useState<SimpleWallet>(new SimpleWallet());
@@ -52,11 +66,6 @@ const App = (): React.JSX.Element => {
     network: 'sapphire_devnet',
   });
 
-  const web3AuthLoginOptions = {
-    loginProvider: LOGIN_PROVIDER.GOOGLE,
-    redirectUrl: redirectUrl,
-  };
-
   useEffect(() => {
     web3auth.init();
   }, [web3auth]);
@@ -66,7 +75,7 @@ const App = (): React.JSX.Element => {
     //wallet.import('0x' + web3auth.privKey);
     //console.log(wallet.list);
     setBalance(
-      ethers.formatEther(await provider.getBalance(wallet.list[0].address)) +
+      ethers.formatEther(await provider?.getBalance(wallet.list[0].address)) +
         ' VET',
     );
   };
@@ -106,27 +115,36 @@ const App = (): React.JSX.Element => {
     setBalance('0 VET');
   };
 
+  const handleContract = async () => {
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      CONTRACT_ABI,
+      provider,
+    );
+    console.log(await contract.balance());
+  };
+
   return (
     <SafeAreaView style={tw`bg-white`}>
       <Header />
       <View style={tw`bg-white`}>
         <Section title="Login via Web3Auth">
           {isLoggedIn ? (
-            <TouchableOpacity
-              style={tw`bg-red-500 font-bold py-2 px-4 mt-2 rounded`}
+            <Button
               onPress={() => {
                 handleLogout();
-              }}>
-              <Text style={tw`text-white`}>Disconnect Wallet</Text>
-            </TouchableOpacity>
+              }}
+              color="red">
+              Disconnect Wallet
+            </Button>
           ) : (
-            <TouchableOpacity
-              style={tw`bg-blue-400 text-white font-bold py-2 px-4 mt-2 rounded`}
+            <Button
               onPress={() => {
                 handleLogin();
-              }}>
-              <Text>Connect to Wallet</Text>
-            </TouchableOpacity>
+              }}
+              color="blue">
+              Connect to Wallet
+            </Button>
           )}
         </Section>
         <Section title="Account Details">
@@ -143,20 +161,23 @@ const App = (): React.JSX.Element => {
         </Section>
         <Section title="Garden Details">
           <Text>Debug details of the garden</Text>
-          <TouchableOpacity
-            style={tw`bg-green-500 font-bold py-2 px-4 mt-2 rounded`}
-            onPress={() => {
-              console.log(provider?.getNetwork());
-            }}>
-            <Text style={tw`text-white`}>Manual Init Ethers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={tw`bg-violet-500 font-bold py-2 px-4 mt-2 rounded`}
+          <Button onPress={() => {}} color="green">
+            Manual Init Ethers
+          </Button>
+          <Button
             onPress={() => {
               updateBalance();
-            }}>
-            <Text style={tw`text-white`}>Update Balance</Text>
-          </TouchableOpacity>
+            }}
+            color="violet">
+            Update Balance
+          </Button>
+          <Button
+            onPress={() => {
+              handleContract();
+            }}
+            color="yellow">
+            Call Contract
+          </Button>
         </Section>
       </View>
     </SafeAreaView>
