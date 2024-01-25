@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import tw from 'twrnc';
 import type {PropsWithChildren} from 'react';
 import {SafeAreaView, Text, View, TouchableOpacity} from 'react-native';
@@ -10,15 +10,24 @@ import Web3Auth, {LOGIN_PROVIDER} from '@web3auth/react-native-sdk';
 import {ethers} from 'ethers';
 import * as thor from '@vechain/web3-providers-connex';
 import {Framework} from '@vechain/connex-framework';
-import {Driver, SimpleWallet} from '@vechain/connex-driver';
-import {SimpleNet} from './custom_modules/@vechain/esm/simple-net';
+import {Driver, SimpleWallet, SimpleNet} from '@vechain/connex-driver';
 
 import Header from './components/Header';
 
 // Smart contract details
-const CONTRACT_ADDRESS = '0x36C62C181E8815cCABACC2bD9A21d41a1580CAd6';
-const NODE_URL = 'https://testnet.vecha.in/';
-import CONTRACT_ABI from './src/cypress_abi.json';
+const NODE_URL = 'https://sync-testnet.vechain.org';
+//import CONTRACT_ABI from './src/cypress_abi.json';
+
+const CONTRACT_ADDRESS = '0x0000000000000000000000000000456e65726779';
+const ABI = [
+  {
+    name: 'totalSupply',
+    inputs: [],
+    outputs: [{internalType: 'uint256', name: 'vtho', type: 'uint256'}],
+    stateMutability: 'view',
+    type: 'function',
+  },
+];
 
 // Web3Auth details
 const WEB3AUTH_CLIENTID =
@@ -56,7 +65,7 @@ const Button = ({children, onPress, color}: any): React.JSX.Element => {
 const App = (): React.JSX.Element => {
   const [wallet, setWallet] = useState<SimpleWallet>(new SimpleWallet());
   const [wallets, setWallets] = useState<Key[]>([]);
-  const [provider, setProvider] = useState<ethers.Provider>();
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider>();
   const [account, setAccount] = useState<string>('Not Connected');
   const [balance, setBalance] = useState<string>('0 VET');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -70,32 +79,26 @@ const App = (): React.JSX.Element => {
     web3auth.init();
   }, [web3auth]);
 
-  const updateBalance = async () => {
-    //console.log(web3auth.privKey);
-    //wallet.import('0x' + web3auth.privKey);
-    //console.log(wallet.list);
-    setBalance(
-      ethers.formatEther(await provider?.getBalance(wallet.list[0].address)) +
-        ' VET',
-    );
-  };
+  const updateBalance = () => {};
 
-  const initEthers = async () => {
-    const driver = await Driver.connect(new SimpleNet(NODE_URL), wallet);
-    const VechainProvider = thor.ethers.modifyProvider(
-      new ethers.BrowserProvider(
-        new thor.Provider({
-          connex: new Framework(Framework.guardDriver(driver)),
-          wallet: wallet,
-        }),
-      ),
-    );
-    setProvider(VechainProvider);
-    setBalance(
-      ethers.formatEther(
-        await VechainProvider.getBalance(wallet.list[0].address),
-      ) + ' VET',
-    );
+  const initEthers = () => {
+    Driver.connect(new SimpleNet('https://testnet.vecha.in/')).then(driver => {
+      const connexObj = new Framework(driver);
+      const provider = thor.ethers.modifyProvider(
+        new ethers.providers.Web3Provider(
+          new thor.Provider({connex: connexObj}),
+        ),
+      );
+      setProvider(provider);
+      provider.ready.then(() => {
+        console.log('provider ready');
+      });
+      //ethersProvider
+      //.getBalance('0x08da8b8f2b1a19119e442cb7742d842a984677a3')
+      //.then(balance => {
+      //setBalance(ethers.utils.formatEther(balance));
+      //});
+    });
   };
 
   const handleLogin = async () => {
@@ -115,20 +118,25 @@ const App = (): React.JSX.Element => {
     setBalance('0 VET');
   };
 
-  const handleContract = async () => {
-    const contract = new ethers.Contract(
-      CONTRACT_ADDRESS,
-      CONTRACT_ABI,
-      provider,
-    );
-    console.log(await contract.balance());
-  };
+  const handleContract = async () => {};
 
   return (
     <SafeAreaView style={tw`bg-white`}>
       <Header />
       <View style={tw`bg-white`}>
         <Section title="Login via Web3Auth">
+          <Button
+            onPress={() => {
+              wallet.import(
+                '1b5a3a8df6791179f578bf1328d1f042a4cd933d995878bf79519327298916da',
+              );
+              setWallets(wallet.list);
+              setIsLoggedIn(true);
+              setAccount('Manual Wallet');
+            }}
+            color="orange">
+            Manual Wallet
+          </Button>
           {isLoggedIn ? (
             <Button
               onPress={() => {
@@ -161,7 +169,11 @@ const App = (): React.JSX.Element => {
         </Section>
         <Section title="Garden Details">
           <Text>Debug details of the garden</Text>
-          <Button onPress={() => {}} color="green">
+          <Button
+            onPress={() => {
+              initEthers();
+            }}
+            color="green">
             Manual Init Ethers
           </Button>
           <Button
