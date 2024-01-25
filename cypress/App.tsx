@@ -4,6 +4,7 @@ import {SafeAreaView, Text, View, TextInput} from 'react-native';
 
 import {web3auth, web3AuthLoginOptions} from './helpers/Web3AuthProvider';
 import TransactionBuilder from './helpers/TransactionBuilder';
+import {VECHAIN_NODE_URL_DEVNET} from './constants/Constants';
 
 import {ethers} from 'ethers';
 import * as thor from '@vechain/web3-providers-connex';
@@ -31,7 +32,7 @@ const App = (): React.JSX.Element => {
     useState<ethers.providers.JsonRpcProvider>(null);
 
   const initEthers = async () => {
-    const net = new SimpleNet('https://sync-testnet.vechain.org/');
+    const net = new SimpleNet(VECHAIN_NODE_URL_DEVNET);
     const driver = await Driver.connect(net);
     const connex = new Framework(driver);
     const ethersProvider = thor.ethers.modifyProvider(
