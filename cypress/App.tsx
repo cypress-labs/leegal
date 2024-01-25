@@ -1,11 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import tw from 'twrnc';
-import type {PropsWithChildren} from 'react';
-import {SafeAreaView, Text, View, TouchableOpacity} from 'react-native';
+import {SafeAreaView, Text, View, TextInput} from 'react-native';
 
-import EncryptedStorage from 'react-native-encrypted-storage';
-import * as WebBrowser from '@toruslabs/react-native-web-browser';
-import Web3Auth, {LOGIN_PROVIDER} from '@web3auth/react-native-sdk';
+import {web3auth, web3AuthLoginOptions} from './helpers/Web3AuthProvider';
+import TransactionBuilder from './helpers/TransactionBuilder';
 
 import {ethers} from 'ethers';
 import * as thor from '@vechain/web3-providers-connex';
@@ -14,118 +12,94 @@ import {Driver, SimpleWallet} from '@vechain/connex-driver';
 import {SimpleNet} from './custom_modules/@vechain/dist/simple-net';
 
 import Header from './components/Header';
+import Section from './components/Section';
+import Button from './components/Button';
 
-// Smart contract details
-const NODE_URL = 'https://sync-testnet.vechain.org';
-//import CONTRACT_ABI from './src/cypress_abi.json';
-
-// Web3Auth details
-const WEB3AUTH_CLIENTID =
-  'BCTSBrn61jL_KXD6ZJURT65r8XBr9FNGvMjOrFqkHBNnq-z00Qa5Q1jO1B-1qUzXEo_AlezGqL2zmcMJbslMSEo';
-const scheme = 'app.cypresslabs.ios';
-const redirectUrl = `${scheme}://auth`;
-const web3AuthLoginOptions = {
-  loginProvider: LOGIN_PROVIDER.GOOGLE,
-  redirectUrl: redirectUrl,
-};
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-const Section = ({children, title}: SectionProps): React.JSX.Element => {
-  return (
-    <View style={tw`mt-3 px-2 flex flex-col`}>
-      <Text style={tw`text-2xl font-bold dark:text-white`}>{title}</Text>
-      {children}
-    </View>
-  );
-};
-
-const Button = ({children, onPress, color}: any): React.JSX.Element => {
-  return (
-    <TouchableOpacity
-      style={tw`bg-${color}-400 text-white font-bold py-2 px-4 mt-2 rounded`}
-      onPress={onPress}>
-      <Text>{children}</Text>
-    </TouchableOpacity>
-  );
-};
+import {CONTRACT_ADDRESS, ABI} from './src/Greeting.sol';
 
 const App = (): React.JSX.Element => {
-  const [wallet, setWallet] = useState<SimpleWallet>(new SimpleWallet());
-  const [wallets, setWallets] = useState<Key[]>([]);
-  const [provider, setProvider] = useState<any>();
-  const [account, setAccount] = useState<string>('Not Connected');
-  const [balance, setBalance] = useState<string>('0 VET');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [contract, setContract] = useState<any>();
+  const [account, setAccount] = useState<string>('');
+  const [wallet, setWallet] = useState<SimpleWallet>(null);
+  const [addresses, setAddresses] = useState<any>([]);
+  const [balance, setBalance] = useState<any>('0');
+  const [input, setInput] = useState<string>('');
+  const [txs, setTxs] = useState<string[]>([]);
 
-  const web3auth = new Web3Auth(WebBrowser, EncryptedStorage, {
-    clientId: WEB3AUTH_CLIENTID, // Get your Client ID from the Web3Auth Dashboard
-    network: 'sapphire_devnet',
-  });
+  const [msg, setMsg] = useState('Click Get Message');
+  const [provider, setProvider] =
+    useState<ethers.providers.JsonRpcProvider>(null);
 
-  useEffect(() => {
-    web3auth.init();
-  }, [web3auth]);
-
-  const updateBalance = () => {
-    if (provider) {
-      provider.getBalance(wallets[0].address).then((balance: any) => {
-        setBalance(ethers.utils.formatEther(balance) + ' VET');
-      });
-    }
-  };
-
-  const initEthers = () => {
-    const CONTRACT_ADDRESS = '0x0000000000000000000000000000456e65726779';
-    const ABI = [
-      {
-        name: 'totalSupply',
-        inputs: [],
-        outputs: [{internalType: 'uint256', name: 'vtho', type: 'uint256'}],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ];
-    Driver.connect(new SimpleNet('https://testnet.vecha.in/')).then(
-      async driver => {
-        const connexObj = new Framework(driver);
-        const ethProvider = thor.ethers.modifyProvider(
-          new ethers.providers.Web3Provider(
-            new thor.Provider({connex: connexObj}),
-          ),
-        );
-        setProvider(ethProvider);
-        setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, ethProvider));
-      },
+  const initEthers = async () => {
+    const net = new SimpleNet('https://sync-testnet.vechain.org/');
+    const driver = await Driver.connect(net);
+    const connex = new Framework(driver);
+    const ethersProvider = thor.ethers.modifyProvider(
+      new ethers.providers.Web3Provider(
+        new thor.Provider({
+          connex: connex,
+          net: net,
+        }),
+      ),
     );
+    setProvider(ethersProvider);
   };
 
-  const handleLogin = async () => {
-    await web3auth.login(web3AuthLoginOptions);
+  const getBalance = async (
+    ethersProvider: ethers.providers.JsonRpcProvider,
+    address: string,
+  ) => {
+    const balance = await ethersProvider.getBalance(address);
+    setBalance(ethers.utils.formatEther(balance));
+  };
+
+  const handelLogin = async ethersProvider => {
+    await web3auth.login(web3AuthLoginOptions).catch((err: any) => {
+      console.log(err);
+    });
+    let newWallet = new SimpleWallet();
+    newWallet.import(web3auth.privKey);
+    setWallet(newWallet);
+    setAddresses(newWallet.list);
     setIsLoggedIn(true);
     setAccount(web3auth.userInfo().email || 'Not Connected');
-    wallet.import(web3auth.privKey);
-    setWallets(wallet.list);
-    initEthers();
+    getBalance(ethersProvider, newWallet.list[0].address);
   };
 
   const handleLogout = async () => {
     await web3auth.logout();
     setIsLoggedIn(false);
     setAccount('Not Connected');
-    setWallets([]);
-    setBalance('0 VET');
+    setAddresses([]);
   };
 
-  const handleContract = async () => {
-    if (!provider || !contract) {
-      return;
-    }
-    const totalSupply = await contract.totalSupply();
-    console.log(totalSupply);
+  useEffect(() => {
+    web3auth.init();
+    initEthers();
+  }, []);
+
+  const getContractMsg = ethersProvider => {
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, ethersProvider);
+    contract.getGreeting().then((res: string) => {
+      setMsg(res);
+    });
+  };
+
+  const setContractMsg = async (
+    ethersProvider: ethers.providers.JsonRpcProvider,
+  ) => {
+    const raw = await TransactionBuilder(
+      CONTRACT_ADDRESS,
+      ABI,
+      'setGreeting',
+      [input || 'Hello World'],
+      wallet,
+      ethersProvider,
+    );
+    //console.log(raw);
+    ethersProvider.send('eth_sendRawTransaction', [raw]).then((res: any) => {
+      setTxs([...txs, res]);
+    });
   };
 
   return (
@@ -133,71 +107,62 @@ const App = (): React.JSX.Element => {
       <Header />
       <View style={tw`bg-white`}>
         <Section title="Login via Web3Auth">
-          <Button
-            onPress={() => {
-              wallet.import(
-                '1b5a3a8df6791179f578bf1328d1f042a4cd933d995878bf79519327298916da',
-              );
-              setWallets(wallet.list);
-              setIsLoggedIn(true);
-              setAccount('Manual Wallet');
-            }}
-            color="orange">
-            Manual Wallet
-          </Button>
           {isLoggedIn ? (
-            <Button
-              onPress={() => {
-                handleLogout();
-              }}
-              color="red">
+            <Button color="red" onPress={() => handleLogout()}>
               Disconnect Wallet
             </Button>
           ) : (
-            <Button
-              onPress={() => {
-                handleLogin();
-              }}
-              color="blue">
-              Connect to Wallet
+            <Button color="blue" onPress={() => handelLogin(provider)}>
+              Connect Wallet
             </Button>
           )}
         </Section>
         <Section title="Account Details">
-          <Text style={tw`text-gray-500`}>Web3Auth Account: {account} </Text>
-          {wallets.map((item, index) => (
+          <Text style={tw`text-gray-500`}>Account: {account}</Text>
+          {addresses.map((item, index) => (
             <Text key={index} style={tw`text-gray-500`}>
               Wallet {index + 1}: {item.address}{' '}
             </Text>
           ))}
         </Section>
-        <Section title="$FRT & $VET Balance">
-          <Text style={tw`text-gray-500`}>$VET Balance: {balance}</Text>
+        <Section title="Chain Details">
+          <Text style={tw`text-gray-500`}>$VET Balance: {balance} </Text>
           <Text style={tw`text-gray-500`}>$FRT Balance: Not Implemented</Text>
         </Section>
-        <Section title="Garden Details">
-          <Text>Debug details of the garden</Text>
+        <Section title="Contract Calls">
+          <Text style={tw`text-red-500 font-bold text-lg`}>
+            Greeting: {msg}
+          </Text>
+          <TextInput
+            style={tw`border border-gray-400 rounded p-2 mt-2`}
+            value={input}
+            onChange={e => setInput(e.nativeEvent.text)}
+          />
           <Button
+            color="green"
             onPress={() => {
-              initEthers();
-            }}
-            color="green">
-            Manual Init Ethers
+              setContractMsg(provider);
+            }}>
+            Set Message
           </Button>
           <Button
+            color="blue"
             onPress={() => {
-              updateBalance();
-            }}
-            color="violet">
-            Update Balance
+              getContractMsg(provider);
+            }}>
+            Get Message
           </Button>
-          <Button
-            onPress={() => {
-              handleContract();
-            }}
-            color="yellow">
-            Call Contract
-          </Button>
+        </Section>
+        <Section title="Recent Transactions">
+          {txs.length > 0 ? (
+            txs.slice(txs.length - 4, txs.length).map((item, index) => (
+              <Text key={index} style={tw`text-gray-500`}>
+                {item}
+              </Text>
+            ))
+          ) : (
+            <Text style={tw`text-gray-500`}>No Transactions</Text>
+          )}
         </Section>
       </View>
     </SafeAreaView>
