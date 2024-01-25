@@ -24,28 +24,80 @@ const Section = ({children, title}: SectionProps): React.JSX.Element => {
 };
 
 const App = (): React.JSX.Element => {
-  const [balance, setBalance] = useState('0');
-  const [provider, setProvider] =
-    useState<ethers.providers.Web3Provider | null>(null);
+  const [msg, setMsg] = useState('0');
+  const [provider, setProvider] = useState<any>(null);
 
-  Driver.connect(new SimpleNet('https://sync-testnet.vechain.org/')).then(
-    driver => {
-      const connexObj = new Framework(driver);
-      const provider = thor.ethers.modifyProvider(
-        new ethers.providers.Web3Provider(
-          new thor.Provider({connex: connexObj}),
-        ),
-      );
-      setProvider(provider);
-    },
-  );
+  const initEthers = () => {
+    Driver.connect(new SimpleNet('https://sync-testnet.vechain.org/')).then(
+      driver => {
+        const connexObj = new Framework(driver);
+        const ethersProvider = thor.ethers.modifyProvider(
+          new ethers.providers.Web3Provider(
+            new thor.Provider({connex: connexObj}),
+          ),
+        );
+        setProvider(ethersProvider);
+        updateVthoSupply(ethersProvider);
+      },
+    );
+  };
 
   useEffect(() => {
-    updateVthoSupply();
-  }, [provider]);
+    initEthers();
+  }, []);
 
-  const updateVthoSupply = () => {
-    if (!provider) return;
+  const updateVthoSupply = ethersProvider => {
+    const CONTRACT_ADDRESS = '0x0B12235c85d13495372E763c98763105b40337c6';
+    const ABI = [
+      {
+        inputs: [],
+        stateMutability: 'nonpayable',
+        type: 'constructor',
+      },
+      {
+        inputs: [],
+        name: 'getGreeting',
+        outputs: [
+          {
+            internalType: 'string',
+            name: '',
+            type: 'string',
+          },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'getSender',
+        outputs: [
+          {
+            internalType: 'address',
+            name: '',
+            type: 'address',
+          },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [
+          {
+            internalType: 'string',
+            name: '_newGreeting',
+            type: 'string',
+          },
+        ],
+        name: 'setGreeting',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ];
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, ethersProvider);
+    contract.getGreeting().then((res: string) => {
+      setMsg(res);
+    });
   };
 
   return (
@@ -53,7 +105,7 @@ const App = (): React.JSX.Element => {
       <Header />
       <View style={tw`bg-white`}>
         <Section title="Login via Web3Auth">
-          <Text>VETHO Balance: {balance}</Text>
+          <Text>Greeting: {msg}</Text>
         </Section>
       </View>
     </SafeAreaView>
