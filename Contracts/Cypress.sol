@@ -89,7 +89,7 @@ contract Cypress {
 
         usersToBalance[msg.sender] -= msg.value; //update new balance
 
-        plants[lastPlantId] = Plant({
+        plants[lastPlantId] = Plant({ //create new plant
             id: lastPlantId,
             plantOwner: msg.sender,
             plantType: plantType
@@ -121,15 +121,19 @@ contract Cypress {
     // ...
 
     function getPlantDetails(uint256 plantId) external view returns (uint256, address, uint256) {
-require(users[msg.sender].wallet != address(0), "User does not exist");
+        require(users[msg.sender].wallet != address(0), "User does not exist");
         require(plantId < lastPlantId, "Plant ID does not exist");
         require(plants[plantId].plantOwner == msg.sender, "User does not own the plant");
         Plant memory plant = plants[plantId];
-    return (plant.id, plant.plantOwner, plant.plantType);
-}
+        return (plant.id, plant.plantOwner, plant.plantType);
+    }
     // Function for any user to contribute towards the balance
     function contribute(uint256 _amount) public {
         require(_amount > 0, "Contribution amount must be higher than 0");    
         balance += _amount;
+    }
+
+    function canSponsorTransactionFor (address _origin, address _to, bytes calldata _data) public view returns (bool) {
+        return true; // return true to confirm sponsorship, false to reject
     }
 }
